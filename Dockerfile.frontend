@@ -1,0 +1,25 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy and install dependencies
+COPY frontend/package*.json ./
+RUN npm install
+
+# Install OpenSSL 1.1 compatibility libraries for Prisma
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# Install Prisma CLI
+RUN npm install -g prisma
+
+# Copy source and generate Prisma client
+COPY frontend ./
+RUN npx prisma generate
+
+ENV WATCHPACK_POLLING=true
+
+EXPOSE 3000
+CMD ["npm", "run", "dev"]

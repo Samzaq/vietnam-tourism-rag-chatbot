@@ -1,0 +1,139 @@
+# version: "3.9"
+
+# services:
+#   backend:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.backend
+#     env_file:
+#       - backend/.env
+#     container_name: fastapi-backend
+#     ports:
+#       - "8000:8000"
+#     networks:
+#       - app-network
+
+#   frontend:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.frontend
+#     container_name: nextjs-frontend
+#     env_file:
+#       - frontend/.env
+#     ports:
+#       - "3000:3000"
+#     environment:
+#       - NEXT_PUBLIC_API_URL=http://backend:8000
+#     depends_on:
+#       - backend
+#     networks:
+#       - app-network
+
+# networks:
+#   app-network:
+#     driver: bridge
+
+# services:
+#   backend:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.backend
+#     container_name: fastapi-backend
+#     env_file:
+#       - backend/.env
+#     ports:
+#       - "8000:8000"
+#     volumes:
+#       # Mount backend source for hot reload
+#       - ./backend:/app
+#       # Keep installed site-packages separate (don’t override)
+#       - /app/__pycache__
+#     develop:
+#       watch:
+#         # Rebuild container if requirements change
+#         - path: ./backend/requirements.txt
+#           action: rebuild
+#         # Sync Python source changes live
+#         - path: ./backend
+#           target: /app
+#           action: sync
+#     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+#     networks:
+#       - app-network
+
+#   frontend:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.frontend
+#     container_name: nextjs-frontend
+#     env_file:
+#       - frontend/.env
+#     ports:
+#       - "3000:3000"
+#     environment:
+#       # You said you don’t need this — removing won’t break anything if frontend auto-detects backend
+#       - NEXT_PUBLIC_API_URL=http://backend:8000
+#     depends_on:
+#       - backend
+#     volumes:
+#       # Mount frontend code for live updates
+#       - ./frontend:/app
+#       # Avoid overriding node_modules
+#       - /app/node_modules
+#     develop:
+#       watch:
+#         # Rebuild container if dependencies change
+#         - path: ./frontend/package.json
+#           action: rebuild
+#         - path: ./frontend/package-lock.json
+#           action: rebuild
+#         # Sync live frontend edits
+#         - path: ./frontend
+#           target: /app
+#           action: sync
+#     networks:
+#       - app-network
+
+# networks:
+#   app-network:
+#     driver: bridge
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: fastapi-backend
+    env_file:
+      - backend/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: nextjs-frontend
+    env_file:
+      - frontend/.env
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
